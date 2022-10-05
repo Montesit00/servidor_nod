@@ -2,11 +2,11 @@ const Tarea = require("../models/tareas");
 
 const controlTarea = {}
 
-controlTarea.getTarea = (req,res) => {
-    res.send({
-        msg:'Funciona el GET'
-    })
-}
+controlTarea.getTarea = async (req,res) => {
+    const tasks = await Tarea.find({ isActive: true });
+
+    return res.render('index', {tasks});
+};
 
 controlTarea.postTarea = async (req, res) => {
     const {titulo,descrip} = req.body;
@@ -17,22 +17,44 @@ controlTarea.postTarea = async (req, res) => {
 
     const tarea = await newTarea.save();
 
-    return res.json({
-        msg: 'Tarea creada correctamente',
-        tarea
-    });
+    return res.json({msg: 'Tarea creada correctamente',tarea});
 }
 
-controlTarea.putTarea = (req,res) => {
-    res.send({
-        msg:'Funciona el PUT'
-    })
-}
+controlTarea.putTarea = async (req,res) => {
+    const id = req.params.id;
+    const { titulo, descripcion, ...otroDatos } = req.body;
 
-controlTarea.deleteTarea = (req,res) => {
-    res.send({
-        msg:'Funciona el Delete'
-    })
-}
+    if (!id || !descripcion || !titulo) {
+        return res.status(400).json({
+            msg: 'No viene id en la petición',
+        });
+    };
+
+    try {
+        const tareaActualizada = await Tasks.findByIdAndUpdate(id, { titulo, descripcion })
+
+        return res.json({
+            msg: 'Tarea actualizada correctamente',
+        });
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).json({
+            msg: 'Error al actualizar la tarea'
+        })
+    }
+};
+controlTarea.deleteTarea = async (req,res) => {
+    const id = req.params.id;
+
+    try {
+        await Tarea.findByIdAndUpdate(id, { isActive: false })
+        return res.json('Tarea eliminada correctamente');
+    } catch (err) {
+        console.log(err.message)
+        return res.status(500).json({
+            msg: 'Error al eliminar la tarea'
+        });
+    }
+};
 
 module.exports = controlTarea;
